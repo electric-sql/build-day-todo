@@ -8,7 +8,9 @@ import './Example.css'
 
 export const Example = () => {
   const { db } = useElectric()!
-  const { results } = useLiveQuery(db.items.liveMany())
+  const { results } = useLiveQuery(db.items.liveMany({
+    orderBy: { created_at: 'desc' },
+  }))
 
   useEffect(() => {
     const syncItems = async () => {
@@ -26,12 +28,17 @@ export const Example = () => {
     await db.items.create({
       data: {
         value: genUUID(),
+        task: 'New task',
+        done: false,
+        created_at: new Date(),
       },
     })
   }
 
   const clearItems = async () => {
-    await db.items.deleteMany()
+    await db.items.deleteMany({
+      where: { done: true },
+    })
   }
 
   const items: Item[] = results ?? []
@@ -43,14 +50,55 @@ export const Example = () => {
           Add
         </button>
         <button className="button" onClick={clearItems}>
-          Clear
+          Clear Done
         </button>
       </div>
       {items.map((item: Item, index: number) => (
-        <p key={index} className="item">
-          <code>{item.value}</code>
-        </p>
+        <ItemLine key={index} item={item} />
       ))}
     </div>
   )
 }
+
+const ItemLine = ({ item }: { item: Item }) => {
+  const { db } = useElectric()!
+
+  const updateItem = async (task: string) => {
+    await db.items.update({
+      where: { value: item.value },
+      data: { task },
+    })
+  }
+
+  const toggleDone = async () => {
+    await db.items.update({
+      where: { value: item.value },
+      data: { done: !item.done },
+    })
+  }
+
+  return (
+    <p className={`item ${item.done ? 'done' : ''}`}>
+      <input
+        type="checkbox"
+        className="item-checkbox"
+        checked={!!item.done}
+        onChange={toggleDone}
+      />
+      <input
+        type="text"
+        className="item-input"
+        value={item.task ?? ''}
+        onChange={(e) => {
+          updateItem(e.currentTarget.value)
+        }}
+      />
+      <button
+        className="delete-button"
+        onClick={() => {
+          db.items.delete({ where: { value: item.value } })
+        }}
+      >Delete</button>
+    </p>
+  )
+} 
