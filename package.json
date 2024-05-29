@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@electric-sql/debug-toolbar": "^1.2.1-canary.6d4fb3d",
+    "@electric-sql/pglite": "^0.1.5",
     "electric-sql": "^0.11.4-canary.6d4fb3d",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
