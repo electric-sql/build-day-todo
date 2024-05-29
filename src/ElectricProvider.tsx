@@ -31,6 +31,12 @@ const ElectricProviderComponent = ({
 
       const conn = await ElectricDatabase.init(scopedDbName)
       const client = await electrify(conn, schema, config)
+
+      if (config.debug) {
+        const { addToolbar } = await import('@electric-sql/debug-toolbar')
+        addToolbar(client)
+      }
+
       await client.connect(authToken())
 
       if (!isMounted) {
