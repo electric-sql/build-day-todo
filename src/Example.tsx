@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'electric-sql/react'
 import { genUUID } from 'electric-sql/util'
 import { Items as Item } from './generated/client'
@@ -11,18 +11,22 @@ export const Example = () => {
   const { results } = useLiveQuery(db.items.liveMany({
     orderBy: { created_at: 'desc' },
   }))
+  const [syncDone, setSyncDone] = useState(true)
 
   useEffect(() => {
     const syncItems = async () => {
       // Resolves when the shape subscription has been established.
-      const shape = await db.items.sync()
+      const shape = await db.items.sync({
+        where:  {...(syncDone ? {} : { done: false })},
+        key: 'items',
+      })
 
       // Resolves when the data has been synced into the local database.
       await shape.synced
     }
 
     syncItems()
-  }, [])
+  }, [syncDone])
 
   const addItem = async () => {
     await db.items.create({
@@ -52,6 +56,14 @@ export const Example = () => {
         <button className="button" onClick={clearItems}>
           Clear Done
         </button>
+        <label className="label">
+          Sync done tasks
+          <input
+            type="checkbox"
+            checked={syncDone}
+            onChange={() => setSyncDone(!syncDone)}
+          />
+        </label>
       </div>
       {items.map((item: Item, index: number) => (
         <ItemLine key={index} item={item} />
